@@ -70,19 +70,7 @@ int *getBottomSum(int satelliteID){
 
 int *chipCode(int satelliteID){
     int *top = getTopSum();
-    /*int topValues[CODE_SIZE];
-
-    for (int j = 0; j < CODE_SIZE; ++j) {
-        topValues[j] = *(top + j);
-    }*/
-
     int *bottom = getBottomSum(satelliteID);
-
-    /*int bottomValues[CODE_SIZE];
-
-    for (int j = 0; j < CODE_SIZE; ++j) {
-        bottomValues[j] = *(bottom + j);
-    }*/
 
     int *result = malloc(CODE_SIZE * sizeof(int ));
 
@@ -154,7 +142,6 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < CODE_SIZE; i++) {
             int *shiftedCode = shiftCode(fileValue, i);
             int correlation = crossCorrelate(code, shiftedCode);
-            //TODO: Wert für Korrelation finden
             if(correlation > CODE_SIZE + getNegativeNoiseValue()){
                 printf("Satellite %d has sent bit 1 (delta = %d)\n", s, i);
             }else if(correlation < ((-1) * CODE_SIZE + getPositiveNoiseValue())){
