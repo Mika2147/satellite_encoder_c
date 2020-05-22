@@ -30,33 +30,28 @@ int readInFile(char* filename){
     return 0;
 }
 
-int *getTopSum(){
+void getTopSum(int *resultCode){
     int registerValues[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    int *result = malloc(CODE_SIZE * sizeof(int));
 
     for (int i = 0; i < CODE_SIZE; i++) {
-        *(result + i) = registerValues[9];
+        *(resultCode + i) = registerValues[9];
         int newFrontValue = registerValues[2] ^ registerValues[9];
         for(int i = 8; i >= 0; i--){
             registerValues[i + 1] = registerValues[i];
         }
         registerValues[0] = newFrontValue;
     }
-
-    return result;
 }
 
-int *getBottomSum(int satelliteID){
+void getBottomSum(int satelliteID, int *resultCode){
     int registerValues[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    int *result = malloc(CODE_SIZE * sizeof(int));
     int registerSumFirstValue = *(registerSumFirstValues + (satelliteID - 1));
     int registerSumSecondValue = *(registerSumSecondValues + (satelliteID - 1));
 
     for (int i = 0; i < CODE_SIZE; i++) {
         int newFrontValue = ((((registerValues[1] ^ registerValues[2]) ^ registerValues[5]) ^ registerValues[7]) ^ registerValues[8]) ^ registerValues[9];
-
         int newResultValue = registerValues[registerSumFirstValue - 1] ^ registerValues[registerSumSecondValue - 1];
-        *(result + i) = newResultValue;
+        *(resultCode + i) = newResultValue;
 
         for(int i = 8; i >= 0; i--){
             registerValues[i + 1] = registerValues[i];
@@ -64,15 +59,13 @@ int *getBottomSum(int satelliteID){
 
         registerValues[0] = newFrontValue;
     }
-
-    return result;
 }
 
-int *chipCode(int satelliteID){
-    int *top = getTopSum();
-    int *bottom = getBottomSum(satelliteID);
-
-    int *result = malloc(CODE_SIZE * sizeof(int ));
+void chipCode(int satelliteID, int *resultCode){
+    int *top = malloc(CODE_SIZE * sizeof(int));
+    getTopSum(top);
+    int *bottom = malloc(CODE_SIZE * sizeof(int));
+    getBottomSum(satelliteID, bottom);
 
     for(int i = 0; i < CODE_SIZE; i++){
         int newResultValue = *(top + i) ^ *(bottom + i);
@@ -81,10 +74,11 @@ int *chipCode(int satelliteID){
             newResultValue = -1;
         }
 
-        *(result + i) = newResultValue;
+        *(resultCode + i) = newResultValue;
     }
 
-    return result;
+    free(top);
+    free(bottom);
 }
 
 int crossCorrelate(int* first, int* second){
@@ -97,23 +91,18 @@ int crossCorrelate(int* first, int* second){
     return value;
 }
 
-int *shiftCode(int *code, int count){
-    int *result;
-    result = (int *) malloc(CODE_SIZE * sizeof(int));
-
+void shiftCode(int *initialCcode, int count, int *resultCode){
     int j = 0;
 
     for(int i = count; i < CODE_SIZE; i++){
-        *(result + j) = *(code + i);
+        *(resultCode + j) = *(initialCcode + i);
         j++;
     }
 
     for (int i = 0; i < count; i++) {
-        *(result + j) = *(code + i);
+        *(resultCode + j) = *(initialCcode + i);
         j++;
     }
-
-    return result;
 }
 
 int getPositiveNoiseValue(){
@@ -138,16 +127,20 @@ int main(int argc, char *argv[]) {
     }
 
     for(int s = 1; s < 25; s++) {
-        int *code = chipCode(s);
+        int *code = malloc(CODE_SIZE * sizeof(int ));
+        chipCode(s, code);
         for (int i = 0; i < CODE_SIZE; i++) {
-            int *shiftedCode = shiftCode(fileValue, i);
+            int *shiftedCode = (int *) malloc(CODE_SIZE * sizeof(int));
+            shiftCode(fileValue, i, shiftedCode);
             int correlation = crossCorrelate(code, shiftedCode);
             if(correlation > CODE_SIZE + getNegativeNoiseValue()){
                 printf("Satellite %d has sent bit 1 (delta = %d)\n", s, i);
             }else if(correlation < ((-1) * CODE_SIZE + getPositiveNoiseValue())){
                 printf("Satellite %d has sent bit 0 (delta = %d)\n", s, i);
             }
+            free(shiftedCode);
         }
+        free(code);
     }
     return 0;
 }
