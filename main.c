@@ -91,6 +91,21 @@ int crossCorrelate(int* first, int* second){
     return value;
 }
 
+int crossCorrelateBetter(int* first, int* second, int startPoint){
+    int value = 0;
+    int j = 0;
+    for(int i = startPoint; i < CODE_SIZE; i++){
+        value = value + (*(first + j) * *(second + (i)));
+        j++;
+    }
+    for(int i = 0; i < startPoint; i++){
+        value = value + (*(first + j) * *(second + (i)));
+        j++;
+    }
+
+    return value;
+}
+
 void shiftCode(int *initialCcode, int count, int *resultCode){
     int j = 0;
 
@@ -130,15 +145,15 @@ int main(int argc, char *argv[]) {
         int *code = malloc(CODE_SIZE * sizeof(int ));
         chipCode(s, code);
         for (int i = 0; i < CODE_SIZE; i++) {
-            int *shiftedCode = (int *) malloc(CODE_SIZE * sizeof(int));
-            shiftCode(fileValue, i, shiftedCode);
-            int correlation = crossCorrelate(code, shiftedCode);
+            //int *shiftedCode = (int *) malloc(CODE_SIZE * sizeof(int));
+            //shiftCode(fileValue, i, shiftedCode);
+            int correlation = crossCorrelateBetter(code, fileValue, i);
             if(correlation > CODE_SIZE + getNegativeNoiseValue()){
                 printf("Satellite %d has sent bit 1 (delta = %d)\n", s, i);
             }else if(correlation < ((-1) * CODE_SIZE + getPositiveNoiseValue())){
                 printf("Satellite %d has sent bit 0 (delta = %d)\n", s, i);
             }
-            free(shiftedCode);
+            //free(shiftedCode);
         }
         free(code);
     }
